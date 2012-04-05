@@ -2,40 +2,43 @@
 #
 # cipherscan.sh -- Test an SSL/TLS server for cipher suite acceptance.
 #
-# $Id: cipherscan.sh,v 1.2 2012/02/17 14:51:31 cjp Exp cjp $
+# $Id: cipherscan.sh,v 1.3 2012/04/05 16:42:38 cjp Exp $
 # $Source: /home/cjp/RCS/cipherscan.sh,v $
 #
 if [ $# -ne 2 ]; then
-  echo >&2 "Usage: `basename $0` {hostname} {port}"
+  printf >&2 "Usage: `basename %s` {hostname} {port}\n" "$0"
   exit 65;
 fi
 
 hash openssl &>-
 if [ $? -eq 1 ]; then
-  echo >&2 "`basename $0` requires openssl."
+  printf >&2 "`basename %s` requires openssl.\n" "$0"
   exit 65;
 fi 
 
 hostname=$1;
 port=$2;
 
-echo "" | nc -w3 $hostname $port 2&>1 >/dev/null
+printf "\n" | nc -w3 $hostname $port 2&>1 >/dev/null
 if [ $? -eq 1 ]; then
-  echo >&2 "Error connecting to $hostname on port $port."
+  printf >&2 "Error connecting to %s on port %s.\n" "$hostname" "$port"
   exit 65;
 fi
 
-echo "Testing $hostname, port $port."
+printf "Testing %s, port %s.\n" "$hostname" "$port"
 
 for cipher in `openssl ciphers -v 'ALL:eNULL' | cut -d' ' -f1`; do
-  echo -n "" | \
+  printf "" | \
     openssl s_client -cipher "-ALL:$cipher" \
                      -connect $hostname:$port \
                         3>&1 1>/dev/null 2>&3 | grep -En 'handshake failure|no ciphers available|errno=104' >/dev/null;
-  echo -en "$?\t$cipher\n";
+  printf "%s\t%s\n" "$?" "$cipher";
 done
 #
 # $Log: cipherscan.sh,v $
+# Revision 1.3  2012/04/05 16:42:38  cjp
+# Changed error detection strings to work in more situations.
+#
 # Revision 1.2  2012/02/17 14:51:31  cjp
 # Added checking for openssl.
 #
